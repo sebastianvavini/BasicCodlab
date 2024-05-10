@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,9 +30,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.coerceAtLeast
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +56,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(modifier: Modifier = Modifier) {
     // Save the state of the onboarding screen
-    var shouldShowOnboarding by remember { mutableStateOf(true) }
+    var shouldShowOnboarding by rememberSaveable { mutableStateOf(true) }
 
     Surface(modifier) {
         if (shouldShowOnboarding) {
@@ -58,15 +64,7 @@ fun MyApp(modifier: Modifier = Modifier) {
                 onContinueClicked = { shouldShowOnboarding = false }
             )
         } else {
-
-            Column( //modifier = modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Greetings()
-                MenuBar { println("Clicked") }
-
-            }
+            Greetings()
 
         }
     }
@@ -74,36 +72,6 @@ fun MyApp(modifier: Modifier = Modifier) {
 
 }
 
-@Composable
-fun MenuBar(
-    choose: () -> Unit
-) {
-
-    Column() {
-        Row(modifier = Modifier.padding(2.dp)) {
-            Text(text = "Saldo: ")
-            Text(text = "R$ 1000,00")
-            Text(text = " Gratidão: ")
-            Text(text = "GT$ 1000,00")
-
-        }
-        Row() {
-
-            Button(modifier = Modifier.padding(2.dp), onClick = choose) {
-                Text(text = "Alimento")
-            }
-            Button(modifier = Modifier.padding(2.dp), onClick = choose) {
-                Text(text = "Atividade")
-
-            }
-            Button(modifier = Modifier.padding(2.dp), onClick = choose) {
-                Text(text = "Sono")
-            }
-        }
-
-
-    }
-}
 
 @Composable
 fun Greetings(
@@ -112,10 +80,7 @@ fun Greetings(
 ) {
     Column {
 
-        Row(modifier = Modifier.padding(24.dp)) {
-            Text(text = "Total de Pessoas: ")
-            Text(text = "1000,00")
-        }
+
         LazyColumn(
             modifier = modifier
                 .padding(vertical = 4.dp)
@@ -132,10 +97,7 @@ fun Greetings(
 
 }
 
-@Composable
-fun EatScreen() {
 
-}
 
 @Composable
 fun OnboardingScreen(
@@ -162,8 +124,17 @@ fun OnboardingScreen(
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val expanded = remember { mutableStateOf(false) }
-    val extraPadding = if (expanded.value) 48.dp else 0.dp
+    //val expanded = remember { mutableStateOf(false) }
+    val expanded = rememberSaveable { mutableStateOf(false) }
+   // val extraPadding = if (expanded.value) 48.dp else 0.dp
+    val extraPadding by animateDpAsState(
+        targetValue = if (
+            expanded.value) 48.dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
 
     Surface(
         color = MaterialTheme.colorScheme.primary,
@@ -174,11 +145,14 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(bottom = extraPadding)
+                    .padding(bottom = extraPadding.coerceAtLeast(0.dp))
             )
             {
                 Text(text = "Qualidade")
-                Text(text = name)
+                Text(text = name, style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.ExtraBold
+                )
+                )
             }
             ElevatedButton(
                 onClick = { expanded.value = !expanded.value }
